@@ -15,7 +15,20 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: function(origin, callback) {
+    const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
+    
+    // Normalize origins by removing trailing slashes for comparison
+    const normalizedAllowedOrigin = allowedOrigin.endsWith('/') ? allowedOrigin.slice(0, -1) : allowedOrigin;
+    const normalizedRequestOrigin = origin && origin.endsWith('/') ? origin.slice(0, -1) : origin;
+    
+    // Allow the request if origin matches (after normalization) or for same-origin requests
+    if (!origin || normalizedRequestOrigin === normalizedAllowedOrigin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
